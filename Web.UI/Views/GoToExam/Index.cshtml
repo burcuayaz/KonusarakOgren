@@ -1,0 +1,119 @@
+﻿@model Exam
+
+<link href="~/css/quiz.css" rel="stylesheet" />
+
+<h1>Sınav Ol</h1>
+<div class="col-md-12">
+    <div class="form-group">
+        <div class="input-group">
+            <div class="input-group-prepend">
+                <span class="input-group-text" id="basic-addon1">Başlık</span>
+            </div>
+            <input type="text" class="form-control" placeholder="Username" aria-label="Username" readonly value="@Model.Title" aria-describedby="basic-addon1">
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="exampleFormControlTextarea1">Paragraf</label>
+        <textarea class="form-control" disabled id="exampleFormControlTextarea1" rows="10">@Model.QuestionMain</textarea>
+    </div>
+
+</div>
+
+
+<div class="row">
+    @foreach (var (value, index) in Model.Questions.AsEnumerable().Select((v, i) => (v, i)))
+    {
+        <div class="col-sm-6">
+            <form id="soruFormu@(index+1)">
+                <div class="quiz-container" id="quiz">
+                    <div class="quiz-header">
+                        <h2 id="question">
+                            <div class="form-group">
+                                <label for="exampleFormControlTextarea">@(index+1). Soru</label>
+                                <textarea class="form-control" name="soruBody" disabled id="exampleFormControlTextarea" dis rows="2">@value.Body</textarea>
+                            </div>
+                        </h2>
+                        <ul>
+                            <li>
+                                <button type="button" class="A btn btn-light">@value.MarkA</button>
+                            </li>
+                            <li>
+                                <button type="button" class="B btn btn-light">@value.MarkB</button>
+                            </li>
+                            <li>
+                                <button type="button" class="C btn btn-light">@value.MarkC</button>
+                            </li>
+                            <li>
+                                <button type="button" class="D btn btn-light">@value.MarkD</button>
+                            </li>
+
+                        </ul>
+                    </div>
+                </div>
+
+            </form>
+        </div>
+
+    }
+
+</div>
+<div class="row m-2">
+    <button type="button" class="btn btn-warning" onclick="kaydet()">Sınavı Kaydet</button>
+</div>
+
+@section Scripts{
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/2.1.2/sweetalert.min.js" integrity="sha512-AA1Bzp5Q0K1KanKKmvN/4d3IRKVlv9PYgwFPvm32nPO6QS8yH1HO7LbgB1pgiOxPtfeg5zEn2ba64MUcqJx6CA==" crossorigin="anonymous"></script>
+
+    <script>
+        $("button").click(function () {
+            if ($(this).text() !="Sınavı Kaydet") {
+                $(this).parent().parent().children("li").children(".btn").removeClass("btn-primary").addClass("btn-light");
+                $(this).removeClass("btn-light").addClass("btn-primary");
+            }
+
+        });
+        function kaydet() {
+            var cevaplarim = $(".btn-primary");
+
+            if (cevaplarim.length<3) {
+                swal("Seçim Yapınız", 4 - cevaplarim.length+" Seçim Yapmalınız", "warning").then(
+                    function () {
+                    }
+                );
+            }
+
+            else {
+                        $.ajax({
+                url: '/GoToExam/sinavaGir/',
+                type: 'POST',
+                data: JSON.stringify({
+                    examId: @(Html.Raw(Model.ExamId)),Soru: [
+                        { cevap: $(cevaplarim[0]).text() }, { cevap: $(cevaplarim[1]).text() }, { cevap: $(cevaplarim[2]).text() }, { cevap: $(cevaplarim[3]).text()}
+                    ],
+                }),
+                contentType: "application/json; charset=utf-8",
+                beforeSend: function () {
+                },
+                success: function (result) {
+                    $.each(result, function (index, item) {
+                        var element = $((cevaplarim)[index]);
+                        if (element.hasClass(item)) {
+                            element.removeClass("btn-primary").addClass("btn-success");
+                        }
+                       else {
+                            element.removeClass("btn-primary").addClass("btn-danger");
+                        }
+                    });
+
+                },
+                error: function (result) {
+                    swal("Hata", "Lütfen Tekrar Deneyiniz!", "error");
+                }
+            });
+            }
+
+        }
+
+
+    </script>
+}

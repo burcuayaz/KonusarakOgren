@@ -1,0 +1,150 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+    var list = ((List<NewsModel>)ViewBag.News);
+}
+<link href="~/css/quiz.css" rel="stylesheet" />
+
+<h1>Sınav Oluşur</h1>
+<div class="col-md-12">
+    <div class="form-group">
+        <div class="input-group">
+            <div class="input-group-prepend">
+                <label class="input-group-text" for="Office">Başlık Seçiniz</label>
+            </div>
+            <select id="selectTopic" class="selectpicker form-control" onchange="changeState()" data-actions-box="true" data-live-search="true">
+
+                <option value="-1" disabled selected>Konu Seçiniz</option>
+                @foreach (var item in list)
+                {
+                    <option data-link="@item.link" value="@item.title">@item.title</option>
+                }
+
+            </select>
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="exampleFormControlTextarea1">Paragraf</label>
+        <textarea class="form-control" disabled id="exampleFormControlTextarea1" rows="10">Seçim Yapınız</textarea>
+    </div>
+
+</div>
+
+
+<div class="row">
+    @for (int i = 1; i < 5; i++)
+    {
+        <div class="col-sm-6">
+            <form id="soruFormu@(i)">
+                <div class="quiz-container" id="quiz">
+                    <div class="quiz-header">
+                        <h2 id="question">
+                            <div class="form-group">
+                                <label for="exampleFormControlTextarea@(i)">@i. Soru</label>
+                                <textarea class="form-control" name="soruBody" id="exampleFormControlTextarea@(i)" rows="2"></textarea>
+                            </div>
+                        </h2>
+                        <ul>
+                            <li>
+                                <div class="input-group mb-3">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text" id="basic-addon3">A : </span>
+                                    </div>
+                                    <input type="text" name="secenekA" class="form-control" id="basic-url" aria-describedby="basic-addon3">
+                            </li>
+                            <li>
+                                <div class="input-group mb-3">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text" id="basic-addon3">B : </span>
+                                    </div>
+                                    <input type="text" name="secenekB" class="form-control" id="basic-url" aria-describedby="basic-addon3">
+                            </li>
+                            <li>
+                                <div class="input-group mb-3">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text" id="basic-addon3">C : </span>
+                                    </div>
+                                    <input type="text" name="secenekC" class="form-control" id="basic-url" aria-describedby="basic-addon3">
+                            </li>
+                            <li>
+                                <div class="input-group mb-3">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text" id="basic-addon3">D : </span>
+                                    </div>
+                                    <input type="text" name="secenekD" class="form-control" id="basic-url" aria-describedby="basic-addon3">
+                            </li>
+                            <li>
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <label class="input-group-text" for="Office">Doğru Şıkkı Seçiniz</label>
+                                    </div>
+                                    <select name="cevap" class="selectpicker form-control" data-actions-box="true" data-live-search="true">
+
+                                        <option value="A">A</option>
+                                        <option value="B">B</option>
+                                        <option value="C">C</option>
+                                        <option value="D">D</option>
+                                    </select>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+            </form>
+        </div>
+
+    }
+
+</div>
+<div class="row m-2">
+    <button type="button" class="btn btn-primary" onclick="kaydet()">Kaybet</button>
+</div>
+
+@section Scripts{
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/2.1.2/sweetalert.min.js" integrity="sha512-AA1Bzp5Q0K1KanKKmvN/4d3IRKVlv9PYgwFPvm32nPO6QS8yH1HO7LbgB1pgiOxPtfeg5zEn2ba64MUcqJx6CA==" crossorigin="anonymous"></script>
+    <script src="~/js/jquery.Jsonify.js"></script>
+    <script>
+        function changeState() {
+            var selected = $("#selectTopic").find("option:selected");
+            getCustomListWithoutLoading("#exampleFormControlTextarea1", `/CreateExam/ReadTextFromUrl?url=${selected.attr("data-link")}`);
+        }
+        function getCustomListWithoutLoading(whichDiv, address) {
+            $(whichDiv).load(address, function () {
+            });
+        }
+        function kaydet() {
+            var selected = $("#selectTopic").find("option:selected");
+            var soruFormu1 = getFormData($('#soruFormu1'));
+            var soruFormu2 = getFormData($('#soruFormu2'));
+            var soruFormu3= getFormData($('#soruFormu3'));
+            var soruFormu4= getFormData($('#soruFormu4'));
+            $.ajax({
+                url: '/CreateExam/sinavOlustur/',
+                type: 'POST',
+                data: JSON.stringify({
+                    title: selected.val(), QuestionMain: $("#exampleFormControlTextarea1").text(), Soru: [
+                        soruFormu1, soruFormu2, soruFormu3, soruFormu4
+                    ],
+                }),
+                contentType: "application/json; charset=utf-8",
+                beforeSend: function () {
+                },
+                success: function (result) {
+                    
+                    swal("Başarılı", "", "success").then(
+                        function () {
+                            location.reload();
+                        }
+                    );
+                   
+                },
+                error: function (result) {
+                    swal("Hata", "Lütfen Tekrar Deneyiniz!", "error");
+                }
+            });
+        }
+    </script>
+
+}
